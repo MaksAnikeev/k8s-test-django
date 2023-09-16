@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: max
+spec:
+  containers:
+    - name: max-dgango
+      image: django_app
+      env:
+        - name: SECRET_KEY
+          value: "replace_me"
+        - name: DATABASE_URL
+          value: "postgres://test_k8s:OwOtBep9Frut@192.168.0.105:15432/test_k8s"
+      imagePullPolicy: Never
