@@ -6,29 +6,77 @@
 
 ## Как запустить dev-версию
 
-Запустите базу данных и сайт:
+### Запустите базу данных.
+
+Зайдите в папку `backend_main_django` и в ней создайте файл `.env` с указанием переменных окружения для запуска `Postgre`
+
+```shell-session
+POSTGRES_DB='test_k8s'
+POSTGRES_USER='test_k8s'
+POSTGRES_PASSWORD='OwOtBep9Frut'
+```
+Затем запустите 
 
 ```shell-session
 $ docker-compose up
 ```
+В докере будет создана ваша база данных для запуска джанговского проекта.
 
-В новом терминале не выключая сайт запустите команды для настройки базы данных:
+### Запустите проект.
+
+Зайдите в папку `backend_main_django` `kubernetes` и создайте кластер
 
 ```shell-session
-$ docker-compose run web ./manage.py migrate  # создаём/обновляем таблицы в БД
-$ docker-compose run web ./manage.py createsuperuser
+minikube start --driver=virtualbox --no-vtx-check
 ```
 
-Для тонкой настройки Docker Compose используйте переменные окружения. Их названия отличаются от тех, что задаёт docker-образа, сделано это чтобы избежать конфликта имён. Внутри docker-compose.yaml настраиваются сразу несколько образов, у каждого свои переменные окружения, и поэтому их названия могут случайно пересечься. Чтобы не было конфликтов к названиям переменных окружения добавлены префиксы по названию сервиса. Список доступных переменных можно найти внутри файла [`docker-compose.yml`](./docker-compose.yml).
+Затем создайте образ проекта из `Dockerfile`
 
-## Переменные окружения
+```shell-session
+minikube image build -t django_app .
+```
 
-Образ с Django считывает настройки из переменных окружения:
+Зайдите в папку `kubernetes` и создайте файл `secrets` для хранения переменных окружения джанговского проекта
+в данном файле укажите переменные окружения проекта в поле `data`
 
-`SECRET_KEY` -- обязательная секретная настройка Django. Это соль для генерации хэшей. Значение может быть любым, важно лишь, чтобы оно никому не было известно. [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#secret-key).
+```shell-session
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: max-config
+  labels:
+    app: my-django-app
+data:
+  SECRET_KEY: "replace_me"
+  DEBUG: 'False'
+  DATABASE_URL: "postgres://test_k8s:OwOtBep9Frut@192.168.0.170:15432/test_k8s"
+  ALLOWED_HOSTS: "127.0.0.1,localhost,192.168.59.105,kubermax"
+```
 
-`DEBUG` -- настройка Django для включения отладочного режима. Принимает значения `TRUE` или `FALSE`. [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-DEBUG).
+запустите загрузку переменных окружения
 
-`ALLOWED_HOSTS` -- настройка Django со списком разрешённых адресов. Если запрос прилетит на другой адрес, то сайт ответит ошибкой 400. Можно перечислить несколько адресов через запятую, например `127.0.0.1,192.168.0.1,site.test`. [Документация Django](https://docs.djangoproject.com/en/3.2/ref/settings/#allowed-hosts).
+```shell-session
+kubectl apply -f secrets.yaml
+```
 
-`DATABASE_URL` -- адрес для подключения к базе данных PostgreSQL. Другие СУБД сайт не поддерживает. [Формат записи](https://github.com/jacobian/dj-database-url#url-schema).
+запустите загрузку джанго проекта
+
+```shell-session
+kubectl apply -f my_deploy.yaml
+```
+для доступа к проекту по внешнему ip нужно запустить его формирование:
+
+```shell-session
+minikube service django-service --url
+```
+по полученному url будет доступен сайт
+
+```shell-session
+http://192.168.59.105:32288
+```
+
+### Дополнительно
+В папке `kubernetes` есть файл `my_deploy2.yaml` он создан для тестирования разных инструментов кубера, при его запуске 
+также помимо джанговского проекта развертывается еще один под с проектом `tomcat` в качестве образца.
+Также запускается формирование 2х реплик проекта и запускается `autoscalling`. 
+Реализован еще один способ передачи переменных окружения в проект, а также используется тип сервиса `LoadBalancer`
