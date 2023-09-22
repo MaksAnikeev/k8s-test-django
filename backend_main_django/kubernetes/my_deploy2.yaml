@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: max-test
+  labels:
+    app: test-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test1
+  template:
+    metadata:
+      labels:
+        app: test1
+    spec:
+      containers:
+      - name: test-deploy
+        image: django_app
+        envFrom:
+          - configMapRef:
+              name: max-config
+        ports:
+          - containerPort: 80
+        imagePullPolicy: Never
+
+      - name: tomcat
+        image: tomcat:8.5.38
+        ports:
+          - containerPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-service
+  labels:
+    env: prod
+    owner: AnikeevMaks
+spec:
+  type: LoadBalancer
+  selector:
+    app: test1
+  ports:
+    - name: app-listener
+      protocol: TCP
+      port: 80
+      targetPort: 80
+
+    - name: tom-listener
+      protocol: TCP
+      port: 8888
+      targetPort: 8080
+
+
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: my-autoscale
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v2
+    kind: Deployment
+    name: max-test
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

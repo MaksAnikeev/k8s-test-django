@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: max-deployment
+  labels:
+    app: my-django-app
+spec:
+  selector:
+    matchLabels:
+      app: my-django-app
+  template:
+    metadata:
+      labels:
+        app: my-django-app
+    spec:
+      containers:
+        - name: django-deploy
+          image: django_app
+          env:
+            - name: SECRET_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: max-config
+                  key: SECRET_KEY
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: max-config
+                  key: DEBUG
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: max-config
+                  key: DATABASE_URL
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                configMapKeyRef:
+                  name: max-config
+                  key: ALLOWED_HOSTS
+          ports:
+            - containerPort: 80
+          imagePullPolicy: Never
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: django-service
+  labels:
+    env: prod
+    owner: AnikeevMaks
+spec:
+  type: NodePort
+  selector:
+    app: my-django-app
+  ports:
+    - name: app-listener
+      protocol: TCP
+      port: 80
+      targetPort: 80
