@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: max-deployment
+  name: kuber-deployment
   labels:
-    app: my-django-app
+    app: django-app
 spec:
   selector:
     matchLabels:
-      app: my-django-app
+      app: django-app
   template:
     metadata:
       labels:
-        app: my-django-app
+        app: django-app
     spec:
       containers:
         - name: django-deploy
@@ -50,11 +50,11 @@ metadata:
     env: prod
     owner: AnikeevMaks
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
-    app: my-django-app
+    app: django-app
   ports:
-    - name: app-listener
+    - name: django-listener
       protocol: TCP
-      port: 80
+      port: 8888
       targetPort: 80

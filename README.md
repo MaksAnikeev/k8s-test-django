@@ -50,7 +50,7 @@ data:
   SECRET_KEY: "replace_me"
   DEBUG: 'False'
   DATABASE_URL: "postgres://test_k8s:OwOtBep9Frut@192.168.0.170:15432/test_k8s"
-  ALLOWED_HOSTS: "127.0.0.1,localhost,192.168.59.105,kubermax"
+  ALLOWED_HOSTS: "127.0.0.1,localhost,star-burger.test,additional"
 ```
 
 запустите загрузку переменных окружения
@@ -62,21 +62,48 @@ kubectl apply -f secrets.yaml
 запустите загрузку джанго проекта
 
 ```shell-session
-kubectl apply -f my_deploy.yaml
+kubectl apply -f kuber_deploy.yaml
 ```
-для доступа к проекту по внешнему ip нужно запустить его формирование:
+Файл `kuber_ingress.yaml` запускает настройку связывающую имя хоста с подом джанго в кластере
 
+Запуск настройки
 ```shell-session
-minikube service django-service --url
+kubectl apply -f kuber_ingress.yaml
 ```
-по полученному url будет доступен сайт
+После запуска настройки необходимо посмотреть ip, на котором запустилась `ingress`
+```shell-session
+kubectl get ingress
+```
 
+и прописать в `etc/hosts`
 ```shell-session
-http://192.168.59.105:32288
+192.168.59.106 star-burger.test
 ```
+По адресу
+- http://star-burger.test - доступен джанго проект
 
 ### Дополнительно
-В папке `kubernetes` есть файл `my_deploy2.yaml` он создан для тестирования разных инструментов кубера, при его запуске 
+В папке `kubernetes` есть файл `full_deploy.yaml` он создан для тестирования разных инструментов кубера, при его запуске 
 также помимо джанговского проекта развертывается еще один под с проектом `tomcat` в качестве образца.
-Также запускается формирование 2х реплик проекта и запускается `autoscalling`. 
-Реализован еще один способ передачи переменных окружения в проект, а также используется тип сервиса `LoadBalancer`
+И в файле есть второй деплой для проекта hello-world. Также запускается формирование 2х реплик проекта и запускается `autoscalling`. 
+Реализован еще один способ передачи переменных окружения в проект
+
+Файл `kuber_ingress.yaml` запускает настройку связывающую имя хоста с разными подами в кластере
+Запуск настройки
+```shell-session
+kubectl apply -f full_ingress.yaml
+```
+После запуска настройки необходимо посмотреть ip, на котором запустилась `ingress`
+```shell-session
+kubectl get ingress
+```
+
+и прописать в `etc/hosts`
+```shell-session
+192.168.59.106 star-burger.test
+192.168.59.106 additional
+```
+По адресу
+- http://star-burger.test - доступен джанго проект
+- http://additional - доступен тестовый сайт том кет
+- http://star-burger.test/hello - доступен тестовый сайт hello-world 

@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: max-test
+  name: full-deployment
+  namespace: default
   labels:
-    app: test-app
+    app: full-django-ingress
 spec:
-  replicas: 2
   selector:
     matchLabels:
-      app: test1
+      app: full-django-ingress
   template:
     metadata:
       labels:
-        app: test1
+        app: full-django-ingress
     spec:
       containers:
-      - name: test-deploy
+      - name: django-deploy
         image: django_app
         envFrom:
           - configMapRef:
@@ -30,21 +30,45 @@ spec:
           - containerPort: 8080
 
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-second-ingress
+  labels:
+    app: my-second-ingress
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: second-ingress
+  template:
+    metadata:
+      labels:
+        app: second-ingress
+    spec:
+      containers:
+      - name: second-ingress
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+          - containerPort: 8082
+
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: test-service
+  name: ingress-service
+  namespace: default
   labels:
     env: prod
     owner: AnikeevMaks
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
-    app: test1
+    app: full-django-ingress
   ports:
-    - name: app-listener
+    - name: django-listener
       protocol: TCP
-      port: 80
+      port: 6666
       targetPort: 80
 
     - name: tom-listener
@@ -52,18 +76,32 @@ spec:
       port: 8888
       targetPort: 8080
 
-
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: second-ingress-service
+  labels:
+    env: prod
+    owner: AnikeevMaks
+spec:
+  ports:
+    - port: 8080
+      nodePort: 30005
+  type: NodePort
+  selector:
+    app: second-ingress
 
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: my-autoscale
+  name: deploy-autoscale
 spec:
   scaleTargetRef:
     apiVersion: apps/v2
     kind: Deployment
-    name: max-test
+    name: full-deployment
   minReplicas: 2
   maxReplicas: 6
   metrics:
