@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: cron-max
+spec:
+  schedule: "0 0 1 * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: max-django
+            image: django_app
+            envFrom:
+              - configMapRef:
+                  name: max-config
+            command: [ "/bin/sh", "-c" ]
+            args: [ "/usr/local/bin/python /code/manage.py clearsessions" ]
+            imagePullPolicy: Never
+          restartPolicy: OnFailure
