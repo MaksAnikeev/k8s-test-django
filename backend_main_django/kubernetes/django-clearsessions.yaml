@@ -4,8 +4,10 @@ metadata:
   name: cron-max
 spec:
   schedule: "0 0 1 * *"
+  startingDeadlineSeconds: 200
   jobTemplate:
     spec:
+      ttlSecondsAfterFinished: 50
       template:
         spec:
           containers:
