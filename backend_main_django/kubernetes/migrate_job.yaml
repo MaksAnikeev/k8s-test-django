@@ -11,7 +11,12 @@ spec:
         envFrom:
           - configMapRef:
               name: max-config
-        command: ["/bin/sh", "-c", "/usr/local/bin/python /code/manage.py migrate"]
+        command:
+          - sh
+        args:
+          - -c
+          - python manage.py migrate --noinput
         imagePullPolicy: Never
       restartPolicy: Never
   backoffLimit: 4
+

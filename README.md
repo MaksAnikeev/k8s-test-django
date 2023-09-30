@@ -5,6 +5,14 @@
 Внутри конейнера Django запускается с помощью Nginx Unit, не путать с Nginx. Сервер Nginx Unit выполняет сразу две функции: как веб-сервер он раздаёт файлы статики и медиа, а в роли сервера-приложений он запускает Python и Django. Таким образом Nginx Unit заменяет собой связку из двух сервисов Nginx и Gunicorn/uWSGI. [Подробнее про Nginx Unit](https://unit.nginx.org/).
 
 ## Как запустить dev-версию
+### Создайте кластер `minikube`
+```shell-session
+minikube start --driver=virtualbox --no-vtx-check --extra-config=kubelet.housekeeping-interval=10s
+```
+Создайте образ проекта в кластере
+```shell-session
+minikube image build -t django_app .
+```
 
 ### Запустите базу данных.
 
@@ -82,6 +90,25 @@ kubectl get ingress
 По адресу
 - http://star-burger.test - доступен джанго проект
 
+### clearsessions 
+В папке `kubernetes` есть файл `django_clearsession.yaml` - это настройка таймера, который 
+раз в месяц запускает под для очистки отработанных сессий в джанго проекте
+Запуск настройки
+```shell-session
+kubectl apply -f django_clearsession.yaml
+```
+Если хотим запустить очистку вне таймера, отдельно, то:
+```shell-session
+kubectl get cronjob
+kubectl create job --from=cronjob/cron-max cron-max-1
+```
+### migrate
+В папке `kubernetes` есть файл `migrate_job.yaml` - это манифест для быстрого 
+запуска миграцйи после обновления проекта
+Запуск настройки
+```shell-session
+kubectl apply -f migrate_job.yaml
+```
 ### Дополнительно
 В папке `kubernetes` есть файл `full_deploy.yaml` он создан для тестирования разных инструментов кубера, при его запуске 
 также помимо джанговского проекта развертывается еще один под с проектом `tomcat` в качестве образца.
