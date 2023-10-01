@@ -134,3 +134,40 @@ kubectl get ingress
 - http://star-burger.test - доступен джанго проект
 - http://additional - доступен тестовый сайт том кет
 - http://star-burger.test/hello - доступен тестовый сайт hello-world 
+
+### Запуск postgresql внутри кластера, для тренировки
+В папке `kubernetes` есть файл `postgree-pv.yaml` и `postgree-pvс.yaml` это манифесты
+для настройки postgresql и создания в кластере папки для постоянного хранения информации
+
+Эти манифесты нужно запустить
+```shell-session
+kubectl apply -f postgree-pv.yaml
+kubectl apply -f postgree-pvc.yaml
+```
+После этого запускаем создание пода postgree из образа
+```shell-session
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+helm install max-postgree bitnami/postgresql `
+--set primary.persistence.existingClaim=postgresql-pv-claim `
+--set volumePermissions.enabled=true `
+--set global.postgresql.auth.postgresPassword= ..... `
+--set global.postgresql.auth.username=test_k8s `
+--set global.postgresql.auth.password=OwOtBep9Frut `
+--set global.postgresql.auth.database=test_k8s `
+--set global.postgresql.service.ports.postgresql=25432
+```
+Запускается создание БД (укажите свой пароль администратора postgresPassword)
+с `username=test_k8s`, `database=test_k8s`, `password=OwOtBep9Frut`, порт `ports.postgresql=25432`
+
+Чтобы получить доступ к созданной БД и посмотреть как она работает:
+```shell-session
+kubectl run max-postgree-postgresql-client --rm --tty -i --restart='Never' --namespace default --image docker.io/bitnami/postgresql:16.0.0-debian-11-r3 --env="PGPASSWORD=OwOtBep9Frut" `
+ --command -- psql --host max-postgree-postgresql -U test_k8s -d test_k8s -p 25432
+```
+
+Чтобы иметь к данной БД доступ в проекте джанго, необходимо в файле `my_secrets.yaml`
+прописать:
+```shell-session
+DATABASE_URL: "postgres://test_k8s:OwOtBep9Frut@max-postgree-postgresql:25432/test_k8s"
+```
