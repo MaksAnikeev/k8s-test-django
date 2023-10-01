@@ -12,11 +12,11 @@ spec:
           - configMapRef:
               name: max-config
         command:
-          - sh
+          - python
         args:
-          - -c
-          - python manage.py migrate --noinput
+          - manage.py
+          - migrate
         imagePullPolicy: Never
       restartPolicy: Never
-  backoffLimit: 4
+  backoffLimit: 3
 
