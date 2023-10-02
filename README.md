@@ -109,31 +109,6 @@ kubectl create job --from=cronjob/cron-max cron-max-1
 ```shell-session
 kubectl apply -f migrate_job.yaml
 ```
-### Дополнительно
-В папке `kubernetes` есть файл `full_deploy.yaml` он создан для тестирования разных инструментов кубера, при его запуске 
-также помимо джанговского проекта развертывается еще один под с проектом `tomcat` в качестве образца.
-И в файле есть второй деплой для проекта hello-world. Также запускается формирование 2х реплик проекта и запускается `autoscalling`. 
-Реализован еще один способ передачи переменных окружения в проект
-
-Файл `kuber_ingress.yaml` запускает настройку связывающую имя хоста с разными подами в кластере
-Запуск настройки
-```shell-session
-kubectl apply -f full_ingress.yaml
-```
-После запуска настройки необходимо посмотреть ip, на котором запустилась `ingress`
-```shell-session
-kubectl get ingress
-```
-
-и прописать в `etc/hosts`
-```shell-session
-192.168.59.106 star-burger.test
-192.168.59.106 additional
-```
-По адресу
-- http://star-burger.test - доступен джанго проект
-- http://additional - доступен тестовый сайт том кет
-- http://star-burger.test/hello - доступен тестовый сайт hello-world 
 
 ### Запуск postgresql внутри кластера, для тренировки
 В папке `kubernetes` есть файл `postgree-pv.yaml` и `postgree-pvс.yaml` это манифесты
