@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: django-deploy
-          image: django_app
+          image: anikeevmaks/kuber-django:first
           env:
             - name: SECRET_KEY
               valueFrom:
@@ -39,7 +39,6 @@ spec:
                   key: ALLOWED_HOSTS
           ports:
             - containerPort: 80
-          imagePullPolicy: Never
 
 ---
 apiVersion: v1
@@ -50,7 +49,7 @@ metadata:
     env: prod
     owner: AnikeevMaks
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: django-app
   ports:

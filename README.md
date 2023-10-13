@@ -146,3 +146,68 @@ kubectl run max-postgree-postgresql-client --rm --tty -i --restart='Never' --nam
 ```shell-session
 DATABASE_URL: "postgres://test_k8s:OwOtBep9Frut@max-postgree-postgresql:25432/test_k8s"
 ```
+
+## Как запустить prod-версию
+### Создайте кластер на внешнем ресурсе и подключитись к нему с вашего хоста
+Кладем файл с настройками в папку `C:\Users\user\.kube`
+Записываем переменную окружения в PowerShell
+```shell-session
+$env:KUBECONFIG = 'C:\Users\user\.kube\kubernetes-cluster-proba_kubeconfig.yaml'
+```
+и вызываем для проверки
+```shell-session
+kubectl cluster-info
+```
+
+### Запустите базу данных (описано выше).
+### Запустите проект.
+
+Образ для проекта прописан в манифесте и находится на DockerHub `anikeevmaks/kuber-django:first`
+
+Зайдите в папку `kubernetes` и создайте файл `secrets` для хранения переменных окружения джанговского проекта
+в данном файле укажите переменные окружения проекта в поле `data`
+
+```shell-session
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: max-config
+  labels:
+    app: my-django-app
+data:
+  SECRET_KEY: "replace_me"
+  DEBUG: 'False'
+  DATABASE_URL: "postgres://test_k8s:OwOtBep9Frut@max-postgree-postgresql:15432/test_k8s"
+  ALLOWED_HOSTS: "127.0.0.1,localhost,star-burger.test,additional"
+```
+запустите загрузку переменных окружения
+```shell-session
+kubectl apply -f secrets.yaml
+```
+
+запустите загрузку джанго проекта
+```shell-session
+kubectl apply -f kuber_deploy.yaml
+```
+запуситите сервисы
+```shell-session
+kubectl get svc
+```
+увидете адрес, на котором находится созданный проект
+```shell-session
+django-service               LoadBalancer   10.98.234.94    158.160.65.169   8888:30875/TCP
+```
+запишите `158.160.65.169` в ALLOWED_HOSTS в манифесте `secrets` и перезапустите деплоймент
+```shell-session
+kubectl rollout restart deployment kuber-deployment
+```
+
+### migrate
+В папке `kubernetes` есть файл `migrate_job.yaml` - это манифест для быстрого 
+запуска миграцйи после обновления проекта
+Запуск настройки
+```shell-session
+kubectl apply -f migrate_job.yaml
+```
+
+### проект будет доступен по адресу `158.160.65.169:8888`
