@@ -193,11 +193,11 @@ kubectl apply -f kuber_deploy.yaml
 ```shell-session
 kubectl get svc
 ```
-увидете адрес, на котором находится созданный проект
+увидите адрес, на котором находится созданный проект
 ```shell-session
-django-service               LoadBalancer   10.98.234.94    158.160.65.169   8888:30875/TCP
+django-service  LoadBalancer   10.98.192.255   158.160.3.24    8888:31044/TCP
 ```
-запишите `158.160.65.169` в ALLOWED_HOSTS в манифесте `secrets` и перезапустите деплоймент
+запишите `158.160.3.24` в ALLOWED_HOSTS в манифесте `secrets` и перезапустите деплоймент
 ```shell-session
 kubectl rollout restart deployment kuber-deployment
 ```
@@ -210,4 +210,21 @@ kubectl rollout restart deployment kuber-deployment
 kubectl apply -f migrate_job.yaml
 ```
 
-### проект будет доступен по адресу `158.160.65.169:8888`
+### проект будет доступен по адресу `158.160.3.24:8888`
+
+### Запустите проект на доменном имени
+В папке `kubernetes` в файле `secrets` укажите доменное имя `edu-stoic-dubinsky.sirius-k8s.dvmn.org`
+полученное в настройках ALB-роутера в Яндекс облаке
+
+```shell-session
+ALLOWED_HOSTS: "127.0.0.1,localhost,star-burger.test,edu-stoic-dubinsky.sirius-k8s.dvmn.org"
+```
+запустите загрузку переменных окружения
+```shell-session
+kubectl apply -f secrets.yaml
+```
+запустите деплоймент
+```shell-session
+kubectl apply -f kuber_domen_deploy.yaml
+```
+### проект будет доступен по адресу `edu-stoic-dubinsky.sirius-k8s.dvmn.org`
